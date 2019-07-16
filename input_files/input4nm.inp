@@ -1,0 +1,35 @@
+!------------------ required options ---------------------------------------
+fconfig       '../input_files/4nm.xyz'  ! input filename - either a centroid .xyz or a full bead configuration
+Nbeads        1           ! Number of beads 
+fsave         'test4nm'      ! run name - this will be appended to all the output files
+eq_timesteps   0       ! number of steps to equilibrate		 
+run_timesteps  20      ! number of steps to run 
+delt       .5 		! timestep in fs
+pot_model  3 		! Model: 2ttm21f 3ttm3f 4 qspcfw 5spcf 6SIESTA
+Rc 15                  !cutoff Ang
+guess_initdip .t.
+print_dipiters .t.
+
+!------------------- output options -----------------------------------------
+coord_out    .t.     ! centroid coordinates output 
+dip_out      .f.     ! all dipoles output 
+TD_out       .f.     ! total dipole ouput 
+images_out   .f.     ! coordinates for all images output
+IMAGEDIPOLESOUT  .f. ! output dipoles for all PIMD images 
+BOXSIZEOUT     .f.   ! box size running average output 
+TP_out         .f.   ! Temp/Press (.t.  to file, .f.  to terminal)
+HISTOUT        .t.   ! output OH histograms to seperate file 
+CALCDIFFUSION  .f.   ! computes diffusion constant of oxygen atoms, prints out 
+CALCDOS        .f.   ! stores hydrogen velocities and prints out density of states spectrum at end 
+td_freq  1		     ! Total dipole output frequency 
+tp_freq  1 		 ! Temp/Press output frequency
+ti_freq  2000		 ! all images output frequency 
+t_freq   1000          ! output frequency for everything else
+ 
+!------------------ thermostat options --------------------------------------
+temp  300           ! Temperature (Kelvin) 
+GENVEL  .t.	       !generate velocities 
+THERMOSTAT  .t.      ! Global Nose-Hoover thermostat? 
+tau  .01               !  tau for global thermostat (ps)
+
+ 

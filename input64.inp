@@ -1,0 +1,57 @@
+old
+!Input file - this is a fixed format file, edit with caution!
+
+BASIC INFO
+'input_coords/64_PBE.xyz' ! input filename - either a centroid .xyz or a full bead configuration
+'test64mol'    ! run name - this will be appended to all the output files
+1					 ! Number of beads 
+1000      		 ! number of steps to equilibrate		 
+200000	            	 ! number of steps to run
+.5                  	 ! timestep (delt) (fs)
+
+OUTPUT OPTIONS 
+.f.                      ! centroid coordinates
+.f.                      ! centroid momenta
+.f.                      ! dipoles
+.f.                      ! polarization dipoles
+.f.                      ! total dipole
+.f.                      ! coordinates for all images
+.f.                      ! dipoles for all images
+.f.                      ! box size running average
+.f.                      ! Temp/Press (.t. = to file, .f. = to terminal)
+.t.                      ! avg. radius of gyration (in Temp/Press file)
+.f.                      ! output dielectric constant (running average in Temp/Press file)
+.f.                      ! write out charges in seperate file?
+.t.                      ! write final configuration of all beads to seperate file?
+20					     ! Total dipole output frequency 
+1				 		 ! Temp/Press output frequency
+2000					 ! all images output frequency 
+10       				 ! Output frequency for everything else
+
+MD OPTIONS 
+6                    ! Model: 2=ttm21f 3=ttm3f 4= qspcfw 5=spcf 6=SIESTA
+'siesta','64h2o', 1 			    ! sys_label for SIESTA runs, # SIESTA processors 
+6.1d0 5d0 1.d-6           ! realspace cutoff (Ang), start of VdW force switch (Ang) (TTM3F only), eps for aewald
+15  0.7  1.d-6 .f.  .f. ! params for dipole iterative procedure: Max iterations, pol factor, accuracy, guess initial?, debug output
+.t.					 	! generate initial velocities? 
+.t.    			 		! Global thermostat? t/f
+.f.      				! Thermostat non-centroid modes ? 
+.f.			 			! Thermostat centroid mode ?
+'Nose-Hoover'     			! type of bead thermostat - 'Nose-Hoover', 'Langevin' or 'none'
+.5			 			! tau for global thermostat (ps)
+.1			 			! tau for centroid thermostat (ps)
+2			   ! global Nose-Hoover chain length
+2			   ! bead Nose-Hoover chain length
+300	     ! temperature (Kelvin)
+.f.			 ! Berendson barostat ?
+.2       ! tau for barostat (ps)
+1		     ! reference pressure (bar) 
+.f.			 ! pressure coupling during equilibration only?
+
+MORE RUN OPTIONS
+9000			 ! frequency (inverse cm) to set NMs to ( or enter 0 for none/RPMD)
+full		 ! type of PIMD run - "full", "contracted", "monomerPIMD"
+5			 ! ratio of slow timestep / fast timestep for contraction scheme
+15.994		 ! mass of Oxygen (au)
+1.008		 ! mass of Hyrdrogen
+.false.      ! restart? (append to previous files) 

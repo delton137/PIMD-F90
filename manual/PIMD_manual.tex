@@ -1,0 +1,139 @@
+%\documentclass[aip,reprint]{revtex4-1}
+\documentclass[10pt]{article}
+\author{Dan Elton}
+\date{\today}
+
+%%%%%%%%%%%%%%%   PACKAGES   %%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{amsmath}    % Package  for subequations
+\usepackage{graphicx}   % Package for figures
+\usepackage{float}      % Package for figures to float
+\usepackage{verbatim}   % Package  for program listings
+\usepackage{color}      % Package to insert  color in text
+\usepackage{hyperref}   % Package  for hypertext links, external documents and URLs
+\usepackage{amssymb}    % For mathematical constructions
+\usepackage{latexsym}   % Package to generate mathematical symbols
+\usepackage{multirow}   % Self explanatory package for tables
+\usepackage{array}      % Necessary to get the centering of objects to come out right in tables
+%\usepackage[top2.5cm,left3cm,right3cm,bottom2.5cm,a4paper]{geometry}
+\usepackage{cancel}     % Package for cross outs      
+%\renewcommand{\theenumi}{\roman{enumi}}
+%\renewcommand{\labelenumi}{\theenumi} %set lowercase Roman numerals (i),(ii),etc for enumerate lists
+
+%------------------------------ COMMANDS ---------------------------------------------
+\newcommand{\bs}[1] {  \boldsymbol{#1}           }
+\newcommand{\ff}[1] {  \mbox{\footnotesize{#1}}  }
+\newcommand{\Ang}   {  \mbox{\normalfont\AA}     }
+
+%%%%%%%%%%%%%%%   DOCUMENT   %%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+%\numberwithin{equation}{section} % To give the number of each equation related to the section
+%\tableofcontents % to print the index
+\section*{PIMD manual}
+2016 D.C. Elton \\
+
+\subsection*{Description of the input file options}
+The input file is variable format and contains lines of the form {\it key}  {\it value}, where 'key' is a case-sensitive name of a variable in the program, and {\it value} is a value. Boolean keys are specified as ``.t." (true) or ``.f" (false). The characters ``!" or ``\#" may be used to comment lines, and blank lines are ignored. 
+
+\subsection*{Required options}
+\begin{tabular}{lll}
+\textit{fconfig} &(string)& input filename - either a .xyz or .img (full bead simulation img)\\
+\textit{fsave} &(string)& label to be appended to all the output files\\
+\textit{eq\_timesteps}& (int)& number of timesteps to equilibrate		 \\
+\textit{run\_timesteps}& (int)& number of timesteps to run \\
+\textit{delt} &(real)& timestep in fs\\
+\textit{pot\_model}&(int)&  Model to be used: 2=ttm21f 3=ttm3f 4=qspcfw 5=spcf 6=SIESTA\\
+\end{tabular} 
+
+\subsection*{Optional options}
+
+\subsubsection*{Output options}
+\begin{tabular}{l l p{6cm}}
+\textit{coord\_out}&(Bool, default  .f.)&        centroid coordinates output \\
+\textit{momenta\_out}&(Bool, default  .f.)&       centroid velocities output \\ 
+\textit{dip\_out } &(Bool, default     .f. )&      all dipoles output \\
+\textit{Edip\_out } &(Bool, default    .f. )&      electronic (polarization) dipoles output\\
+\textit{TD\_out  } &(Bool, default     .f. )&      total dipole output \\
+\textit{images\_out} &(Bool, default  .f. )&     coordinates for all images output\\
+\textit{IMAGEDIPOLESOUT }&(Bool, default  .f.)&   dipoles for all images output \\
+\textit{TP\_out  }  &(Bool, default    .f.  )&     Temp/Press (.t.  to file, .f.  to terminal)\\
+\textit{ENERGYOUT}  &(Bool, default     .f. )&    total energy output (separate file)\\
+\textit{HISTOUT  }  &(Bool, default     .t. )&    OH histograms output (separate file) \\
+\textit{BOXSIZEOUT}&(Bool, default    .f. )&      box size running average output \\
+\textit{CALCGEOMETRY }&(Bool, default  .t. )& compute average geometry of H2O molecules \& output at end\\
+\textit{CALCDIFFUSION}&(Bool, default  .t. )& computes diffusion constant of oxygen \& output at end\\
+\textit{read\_method  }&(Bool, default  1)&   .xyz file format (0 for OO....HHH and 1 for OHHOHH...)\\
+\textit{CALCIRSPECTRA} &(Bool, default  .f.)&  store dipole moments and calculate IR spectra at end of run\\
+\textit{CALCDOS   } &(Bool, default  .t. )&  store H velocities and calculate DOS spectra at end of run\\
+\textit{CALC\_RADIUS\_GYRATION}&(Bool, default  .t. )& output avg. radius of gyration (column in TempPress file)\\
+\textit{DIELECTRICOUT}&(Bool, default  .t.  )& output dielectric constant from running averages $\langle M^2\rangle - \langle M\rangle^2$(column in TempPress file) \\
+\textit{CHARGESOUT }  &(Bool, default  .f.  )&   charges on atoms output (to separate file)\\
+\textit{WRITECHECKPOINTS}&(Bool, default  .t. )&  configurations of all beads output (to separate file) \\
+ & & \\
+\textit{td\_freq}&(int, default  1	)& 	   		 Total dipole output frequency \\
+\textit{tp\_freq}&(int, default  10 	)& 	    Temp/Press output frequency\\
+\textit{ti\_freq}&(int, default  2000	)& 	    all images output frequency \\
+\textit{t\_freq}&(int, default   10    )&        Output frequency for everything else\\
+\textit{checkpoint\_freq}&(int, default  2000)&  checkpoint output frequency\\
+\textit{ RESTART} &(Bool, default  .f.)&   restart? (this will append to previous output files) \\
+\end{tabular}
+
+\subsubsection*{MD options}
+\begin{tabular}{l l p{6cm}}
+\textit{Nbeads}&(int, default 1)&       Number of beads \\
+\textit{setNMfreq}&(real, default  0       )&      frequency (cm$^{-1}$) to scale normal modes to (0 for none/RPMD)\\
+\textit{PIMD\_type}&(string, default `full'  )&     type of PIMD run (``full", ``contracted", or ``monomerPIMD") \\
+\textit{intra\_timesteps}&(int, default 10  )&   ratio of slow timestep / fast timestep for contraction scheme\\
+&&\\
+\textit{Rc}  &(real, default $L_{\ff{min}}/2$)& 	realspace cutoff ($\Ang$)\\
+\textit{rc1}  &(real, default .8 \textit{Rc}	)& start of switched VdW cutoff ($\Ang$) \\
+\textit{eps\_ewald }&(real, default 1.d-6 )& eps for aewald\\
+\textit{massO}&(real, default  15.994 )&   mass of Oxygen (au)\\
+\textit{massH}&(real, default   1.008 )&   mass of Hyrdrogen (au)\\
+\end{tabular}
+
+
+\subsubsection*{Thermostat options}
+\begin{tabular}{l l p{6cm}}
+\textit{GENVEL} &(Bool, default   .t.	   )&     generate velocities \\
+\textit{THERMOSTAT } &(Bool, default   .f.  )&      Global Nose-Hoover thermostat? \\
+\textit{BEADTHERMOSTAT} &(Bool, default   .f. )&   Bead thermostat? \\
+\textit{CENTROIDTHERMOSTAT} &(Bool, default   .f. )&  thermostat bead centroid? \\
+\textit{bead\_thermostat\_type} &(string, default  'none' )&  type of bead thermostat - ``Nose-Hoover", ``Langevin"(PILE) or ``none"\\
+\textit{temp} &(real, default 300)&            Temperature (Kelvin) \\
+\textit{tau} &(real, default .1 ) & $\tau$ for global thermostat (ps)\\
+\textit{tau\_centroid } &(real, default .1 )&  $\tau$ for centroid thermostat (ps)\\
+\textit{global\_chain\_length} &(int, default 4 )&  global Nose-Hoover chain length\\
+\textit{bead\_chain\_length} &(int, default 4  )&   bead Nose-Hoover chain length\\
+\textit{BAROSTAT} &(Bool, default  .f. )&        Berendson barostat (untested! probably not working)?\\
+\textit{tau\_P } &(real, default 0.2   )&       $\tau$ for barostat (ps)\\
+\textit{press} &(real, default  1.0    &       reference pressure (bar) \\
+\textit{PEQUIL} &(Bool, default  .f.	)& 	   pressure coupling during equilibration only?\\
+
+\end{tabular}
+
+\subsubsection*{TTM options}
+\begin{tabular}{l l p{6cm}}
+\textit{polar\_maxiter}&(int, default  15    )&   max polarization dipole iterations \\
+\textit{polar\_sor }&(real, default     0.7  )& TTM pol factor\\
+\textit{polar\_eps  }&(real, default    1.d-3 )& accuracy to converge dipoles to (tweaked for speed) \\
+\textit{guess\_initdip}&(Bool, default  .t.   )& guess initial, use predictor-corrector for dip iterations (increases speed) \\
+\textit{print\_dipiters} &(Bool, default   .f. )&  print info about pol. dipole convergence \\
+\end{tabular}
+
+\subsubsection*{SIESTA related}
+\begin{tabular}{l l p{6cm}}
+\textit{sys\_label}      &(string,required for SIESTA runs)& system label of .fdf file \\
+\textit{mon\_siesta\_name}& (string, required for SIESTA runs) & name of SIESTA executable for monomer calculation \\
+\textit{siesta\_name} & (string, default ``siesta") & name of siesta executable \\ 
+\textit{num\_SIESTA\_nodes} & (int, default 1)& \# processors available for SIESTA calculations\\ 
+\textit{SIESTA\_MON\_CALC} & (Boolean, default .f.) & option to enable SIESTA monomer calculation \\
+\end{tabular}
+\\ \\
+For backwards compatibility with the older type of input file, the keyword \textit{old} may be placed at the top of an old-style input and it will be read accordingly. 
+
+\subsection{Note on periodic boundary conditions}
+The current program only works for a cubic box, but it could be modified for arbitrary box. The box is automatically centered so that molecules span $[-L/2, L/2]$. The periodic boundary conditions follow the bead centroid - if the bead centroid crosses the edge of the box, then all the beads move with it. This means that at any time, some beads may lie outside the box. The potential() subroutine must be able to handle situations where beads are outside the box. All places in the code where PBCs are used are marked with \textit{!PBC} in the code. 
+
+
+\end{document}

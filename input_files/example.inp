@@ -1,0 +1,7 @@
+This is an example input file 
+!A comment 
+
+
+Variable1  90 
+variable2 		100 #comment line
+VARIABLE3   	"Afilename"  junk

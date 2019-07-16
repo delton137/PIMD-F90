@@ -1,0 +1,38 @@
+!------------------ required options ---------------------------------------
+fconfig       'input_files/64_PBE.xyz'  ! input filename - either a centroid .xyz or a full bead configuration
+Nbeads         1             ! Number of beads 
+fsave         'test64'         ! run name - this will be appended to all the output files
+eq_timesteps   100          ! number of steps to equilibrate		 
+run_timesteps  1000      ! number of steps to run 
+delt       .5 		! timestep in fs
+pot_model  6 		! Model: 2 ttm21f 3 ttm3f 4 qspcfw 5 spcf 6 SIESTA
+
+!------------------- output options -----------------------------------------
+coord_out    .t.     ! centroid coordinates output 
+dip_out      .f.     ! all dipoles output 
+TD_out       .f.     ! total dipole ouput 
+BOXSIZEOUT     .f.   ! box size running average output 
+TP_out         .f.   ! Temp/Press (.t.  to file, .f.  to terminal)
+HISTOUT        .f.   ! output OH histograms to seperate file 
+CALCGEOMETRY   .f.   ! 
+CALCDIFFUSION  .f.   ! computes diffusion constant of oxygen atoms, prints out 
+CALCDOS        .f.   ! stores hydrogen velocities and prints out density of states spectrum at end 
+td_freq        1     ! Total dipole output frequency 
+tp_freq      100     ! Temp/Press output frequency
+t_freq       100     ! output frequency for everything else
+hist_out_freq  1000  
+
+ 
+!------------------ thermostat options --------------------------------------
+temp  300           ! Temperature (Kelvin) 
+GENVEL  .t.	        ! generate velocities 
+THERMOSTAT  .t.     ! Global Nose-Hoover thermostat? 
+tau  .5             !  tau for global thermostat (ps)
+
+
+!------------------ PIMD/siesta options ------------------------------------
+setNMfreq  0        ! frequency (inverse cm) to scale normal modes to (0 for none/RPMD)
+PIMD_type  'full'   ! type of PIMD run (full", "contracted", "monomerPIMD") 
+siesta_name 'siesta' !name of siesta executable 
+sys_label   '64h2o' !SIESTA label of .fdf file
+num_SIESTA_nodes  1  !  # SIESTA processors 

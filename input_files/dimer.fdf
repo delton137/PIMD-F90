@@ -1,0 +1,74 @@
+SystemName        water dimer  
+SystemLabel       dimer   # MUST be this file prefix (eg. h2o for h2o.fdf)
+NumberOfAtoms     6
+NumberOfSpecies   2
+
+%block ChemicalSpeciesLabel
+ 1  8  O      # Species index, atomic number, species label
+ 2  1  H
+%endblock ChemicalSpeciesLabel
+
+LatticeConstant       15 Ang
+%block LatticeVectors
+  1.0  0.0  0.0
+  0.0  1.0  0.0
+  0.0  0.0  1.0
+%endblock LatticeVectors
+
+AtomicCoordinatesFormat  Ang
+
+xc.functional          GGA
+xc.authors             PBE
+
+#%block AtomicMass  #Erase this block if you want to do H and not Deuterium
+#  2   1.0
+#%endblock AtomicMass
+
+%Block PAO.Basis
+O    3     -0.24233
+n=2   0   2   E    23.36061     3.39721
+     4.50769     2.64066
+     1.00000     1.00000
+n=2   1   2   E     2.78334     5.14253
+     6.14996     2.59356
+     1.00000     1.00000
+n=3   2   1   E    63.98188     0.16104
+     3.54403
+     1.00000
+H    2      0.46527
+n=1   0   2   E    99.93138     2.59932
+     4.20357     1.84463
+     1.00000     1.00000
+n=2   1   1   E    24.56504     2.20231
+     3.52816
+     1.00000
+%EndBlock PAO.Basis
+
+
+MeshCutoff           150.0 Ry       # Mesh cutoff. real space mesh
+
+# SCF options
+MaxSCFIterations      50            # Maximum number of SCF iter
+DM.MixingWeight       0.3           # New DM amount for next SCF cycle
+DM.Tolerance          1.d-4         # Tolerance in maximum difference
+DM.NumberPulay         3
+#DM.UseSaveDM
+
+SolutionMethod        diagon        # OrderN or Diagon # KEEP THIS LINE
+MD.TypeOfRun    	  forces
+
+
+#LongOutput
+#WriteCoorXmol
+#WriteMDXmol
+#WriteMDHistory
+
+
+%block AtomicCoordinatesAndAtomicSpecies
+-1.464   0.099   0.300  1
+-1.956   0.624  -0.340  2
+-1.797  -0.799   0.206  2
+ 1.369   0.146  -0.395  1
+ 1.894   0.486   0.335  2
+ 0.451   0.165  -0.083  2
+%endblock AtomicCoordinatesAndAtomicSpecies
