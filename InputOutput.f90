@@ -451,6 +451,8 @@ else
 		RRc(:,i) = RRc(:,i) - avgRR
 	enddo
 
+	call make_molecules_whole(RRc) ! undo any atom-by-atom wrapping in the input file
+
 	call initialize_beads      ! Initialize RRt
 	call initialize_velocities ! Initialize PPt
 endif
@@ -1063,6 +1065,11 @@ subroutine load_checkpoint(iun)
  if (THERMOSTAT) then
 	read(iun,*) vxi_global
  endif
+
+ !undo any atom-by-atom wrapping present in checkpoints written by older versions
+ do j = 1, Nbeads
+	call make_molecules_whole(RRt(:,:,j))
+ enddo
 
  !calculate centroid positions
  RRc = sum(RRt,3)/Nbeads

@@ -165,6 +165,11 @@ if (pot_model==2 .or. pot_model==3) then
     !negative sign is to be consistent with rest of code: dRR is potenial derivative, not force
     dRR = -1d0*dRR*EVTOKCALPERMOLE
 
+    !the stress is not requested from SIESTA, so no virial is available for SIESTA runs
+    !(previously these were left undefined). Pressures printed for SIESTA runs are not meaningful.
+    virt = 0d0
+    virialc = 0d0
+
  endif
 
 end subroutine potential

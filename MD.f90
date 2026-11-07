@@ -123,7 +123,7 @@ subroutine monomer_PIMD
  use mpi
  use force_calc
  implicit none
- double precision :: e1, virialmon, virialcmon
+ double precision :: e1, virialmon, virialcmon, virial_mon_c
  double precision, dimension(3,Natoms,Nbeads)  ::  dRRmon
  double precision, dimension(3,Natoms) :: dRRc
  double precision, dimension(3,3)      :: dr1, r1
@@ -176,6 +176,9 @@ subroutine monomer_PIMD
 	!intermolecular force calculation
 	call potential(RRc, RRc, Upot, dRRc, virt, virialc, dip_momI, dip_momE, chg, t, BAROSTAT, sys_label)
 
+	!remove the intramolecular (PS) part from the centroid force - it is already applied on the beads
+	call remove_centroid_monomer_term(RRc, dRRc, Upot, virial_mon_c)
+
     Upott(:) = Upot  !potential energy for the ENTIRE system (all images)
 
     !intramolecular force calculation
@@ -223,8 +226,8 @@ subroutine monomer_PIMD
 
 	!update Upot
     Upot    = sum(Upott)    	!potential energy for the ENTIRE system
-	virial  = virialmon + virt(1,1) + virt(2,2) + virt(3,3) !virial for the ENTIRE system (all images)
-	virialc = virialcmon/Nbeads + virialc
+	virial  = virialmon + virt(1,1) + virt(2,2) + virt(3,3) - virial_mon_c !virial for the ENTIRE system (all images)
+	virialc = virialcmon/Nbeads + virialc - virial_mon_c
 
     call calc_monomer_dip_moments(dip_momIt, RRt)
 
@@ -283,7 +286,7 @@ subroutine contracted_MD
  use InputOutput
  use force_calc
  Implicit None
- double precision :: e1, virialmon, virialcmon
+ double precision :: e1, virialmon, virialcmon, virial_mon_c
  double precision, dimension(3,Natoms,Nbeads)  ::  dRRfast
  double precision, dimension(3,Natoms) :: dRRc
  double precision, dimension(3,3)      :: dr1, r1
@@ -397,6 +400,9 @@ subroutine contracted_MD
 	!intermolecular force calculation
 	call potential(RRc, RRc, Upot, dRRc, virt, virialc, dip_momI, dip_momE, chg, t, BAROSTAT, sys_label)
 
+	!remove the intramolecular (PS) part from the centroid force - it is already applied on the beads
+	call remove_centroid_monomer_term(RRc, dRRc, Upot, virial_mon_c)
+
     Upott(:) = Upott(:) + Upot  !potential energy for the ENTIRE system (all images)
 
 	!update dRRt
@@ -419,8 +425,8 @@ subroutine contracted_MD
 
 	!update Upot, virial and virialc
     Upot    = sum(Upott)    	!potential energy for the ENTIRE system
-	virial  = virialmon + virt(1,1) + virt(2,2) + virt(3,3) !virial for the ENTIRE system (all images)
-	virialc = virialcmon/Nbeads + virialc
+	virial  = virialmon + virt(1,1) + virt(2,2) + virt(3,3) - virial_mon_c !virial for the ENTIRE system (all images)
+	virialc = virialcmon/Nbeads + virialc - virial_mon_c
 	!update kinetic energy
 	call calc_uk
 
@@ -447,6 +453,65 @@ subroutine contracted_MD
 endif!(pid .eq. 0)
 
 end subroutine contracted_MD
+
+
+!--------------------------------------------------------------------------------------------
+!-- Remove the intramolecular (PS) contribution from the slow (centroid) force
+!--
+!-- In the contracted / monomer-PIMD schemes the intramolecular Partridge-Schwenke (PS)
+!-- potential is evaluated on every bead (the fast force). The slow force evaluated at the
+!-- centroid must therefore contain ONLY the intermolecular part of the potential. If the
+!-- intramolecular part is left in, the intramolecular force constant is counted twice and
+!-- every intramolecular frequency is shifted up by sqrt(2): 1611 -> 2294 cm^-1 (bend) and
+!-- 3922 -> 5550 cm^-1 (stretch) for a single water. These were the unexplained extra peaks
+!-- in Figs. 11-12 of Elton, Fritz & Fernandez-Serra, PCCP 21, 409 (2019).
+!--
+!-- The TTM potentials take care of this internally (pot_ttm skips pot_nasa when CONTRACTION
+!-- is set). SIESTA returns the complete potential it was asked for - plain DFT, or DFT with
+!-- the monomer correction  E_DFT + E_PS - E_fit  of the modified SIESTA - so the PS term is
+!-- removed here:
+!--                     V_slow(c) = V_SIESTA(c) - V_PS(c)
+!-- With the monomer-corrected SIESTA this gives V_slow = E_DFT - E_fit, i.e. exactly the
+!-- intermolecular part of the corrected potential, and with Nbeads = 1 the scheme reduces
+!-- to classical MD on the SIESTA potential, as it should.
+!-- NOTE: SIESTA must return the full potential (including its PS monomer term). Do not use
+!-- a SIESTA build whose monomer correction returns E_DFT - E_fit only; that would remove the
+!-- PS term twice.
+!--------------------------------------------------------------------------------------------
+subroutine remove_centroid_monomer_term(RRc, dRRc, Upot, virial_mon_c)
+ Implicit None
+ double precision, dimension(3,Natoms), intent(in)    :: RRc
+ double precision, dimension(3,Natoms), intent(inout) :: dRRc
+ double precision, intent(inout) :: Upot
+ double precision, intent(out)   :: virial_mon_c
+ double precision, dimension(3,3) :: r1, dr1
+ double precision, dimension(3)   :: roh1, roh2
+ double precision :: e1
+ integer :: iw, jO, jH1, jH2
+
+ virial_mon_c = 0d0
+
+ if (pot_model .ne. 6) return  !TTM potentials already exclude the monomer term when CONTRACTION is set
+
+ do iw = 1, Nwaters
+	jO = 3*iw-2; jH1 = 3*iw-1; jH2 = 3*iw
+
+	r1(1:3, 1:3) = RRc(1:3, (/jO, jH1, jH2/))
+
+	call pot_nasa(r1, dr1, e1, box, boxi)
+
+	dRRc(1:3, (/jO, jH1, jH2/)) = dRRc(1:3, (/jO, jH1, jH2/)) - dr1
+	Upot = Upot - e1
+
+	!corresponding (centroid) virial contribution
+	roh1 = r1(:,2) - r1(:,1)
+	roh1 = roh1 - box*anint(roh1*boxi) !PBC
+	roh2 = r1(:,3) - r1(:,1)
+	roh2 = roh2 - box*anint(roh2*boxi) !PBC
+	virial_mon_c = virial_mon_c + dot_product(roh1, dr1(:,2)) + dot_product(roh2, dr1(:,3))
+ enddo
+
+end subroutine remove_centroid_monomer_term
 
 
 

@@ -99,30 +99,78 @@ character(len=200) :: siesta_name, PIMD_type, mon_siesta_name
 !----------------------------------------------------------------------------------
 !---------- Periodic Boundary conditions for the beads ---------------------------
 !----------------------------------------------------------------------------------
-!The box is assume to span [-L/2, L/2]
+!The box is assumed to span [-L/2, L/2]
 !The PBCs follow the bead centroid - if the bead centroid crosses the edge of the box,
 !then all the beads move with it. This means that at any time, some beads may lie
 !outside the box. The potential(RR, ...) subroutine must be able to handle situations
-!where beads are outside the box
+!where beads are outside the box.
+!
+!Wrapping is done per MOLECULE, not per atom: the shift for a water molecule is
+!determined by its oxygen centroid and the same shift is applied to the O, H1 and H2
+!centroids and to all of their beads. Molecules therefore always stay intact (no H is
+!ever on the opposite side of the box from its O), so the coordinates handed to an
+!external code such as SIESTA never look dissociated.
+!
+!Previously every atom was wrapped independently, which left ~20% of the molecules
+!split across the box edge at any instant. The monomer-corrected SIESTA evaluates the
+!monomer fit on the raw coordinates and switches the correction off when the fit energy
+!exceeds a threshold, so split molecules ended up with the intramolecular force counted
+!twice (PS on the beads plus PS from SIESTA at the centroid). This produced spurious
+!peaks at sqrt(2) x bend (~2290 cm^-1) and sqrt(2) x stretch (~5400 cm^-1) in the DOS.
 subroutine PBCs(RRt, RRc)
  Implicit none
  double precision, dimension(3, Natoms,Nbeads), intent(inout) :: RRt
  double precision, dimension(3, Natoms), intent(inout) :: RRc
- double precision, dimension(3, Natoms) :: shifts
- integer :: i
+ double precision, dimension(3) :: shift
+ integer :: i, iw, jO, jH1, jH2
 
-	!store the shifts here
-	shifts = box(1)*anint(RRc*boxi(1)) !assume square box for now
+ do iw = 1, Nwaters
+	jO = 3*iw-2; jH1 = 3*iw-1; jH2 = 3*iw
 
- 	!Correct the centroids first
-	RRc = RRc - shifts
+	!shift is determined by the oxygen centroid (orthorhombic box)
+	shift = box*anint(RRc(:,jO)*boxi)
 
-	!move the beads
-	do i = 1,Nbeads
-		RRt(:,:,i) = RRt(:,:,i) - shifts
+	if (all(shift .eq. 0d0)) cycle
+
+	!move the centroids of the whole molecule
+	RRc(:,jO)  = RRc(:,jO)  - shift
+	RRc(:,jH1) = RRc(:,jH1) - shift
+	RRc(:,jH2) = RRc(:,jH2) - shift
+
+	!move the beads of the whole molecule
+	do i = 1, Nbeads
+		RRt(:,jO,i)  = RRt(:,jO,i)  - shift
+		RRt(:,jH1,i) = RRt(:,jH1,i) - shift
+		RRt(:,jH2,i) = RRt(:,jH2,i) - shift
 	enddo
+ enddo
 
 end subroutine PBCs
+
+
+!----------------------------------------------------------------------------------
+!---------- Make every molecule whole ---------------------------------------------
+!----------------------------------------------------------------------------------
+!Moves each hydrogen to the periodic image closest to its own oxygen. Input .xyz
+!files or checkpoints written by older versions of this code (or by other codes)
+!may contain molecules that were wrapped atom-by-atom across the box edge; after
+!this call the per-molecule wrapping in PBCs() keeps them intact.
+!RR is a single configuration (the centroids, or one bead image).
+subroutine make_molecules_whole(RR)
+ Implicit none
+ double precision, dimension(3, Natoms), intent(inout) :: RR
+ double precision, dimension(3) :: d
+ integer :: iw, jO, jH
+
+ do iw = 1, Nwaters
+	jO = 3*iw-2
+	do jH = 3*iw-1, 3*iw
+		d = RR(:,jH) - RR(:,jO)
+		RR(:,jH) = RR(:,jO) + d - box*anint(d*boxi)
+	enddo
+ enddo
+
+end subroutine make_molecules_whole
 
 
 
